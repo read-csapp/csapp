@@ -1,0 +1,75 @@
+# 学习总结——20201018
+
+学习内容：深入理解计算机系统 3.8-3.14
+
+## 1 循环与取址
+
+在工作中，需要特别注意循环遍历的取址问题，示例代码如下：
+
+```
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	// 关于循环与取址
+	nums := []int{1, 2, 3}
+	newNums := make([]*int, 0, 3)
+	for _, num := range nums {
+		newNums = append(newNums, &num)
+	}
+	for _, num := range newNums {
+		fmt.Println(*num)
+	}
+}
+```
+
+* 现象
+  * 程序期望输出 1 2 3，但实际上输出的却是 3 3 3
+* 分析
+  * 先解释为什么输出 3 个相同的数：golang 是值传递，在 for range 代码块中，num 是一个局部变量，append 语句对 newNums 赋值，每次都是取 num 的地址，所以 newNums 中会存放 3 个相同的内存地址
+  * 其次解释为什么输出 3 个 3，而不是其他数：for range 语句顺序遍历 nums，遍历结束后，对 num 赋值为 nums的最后一个元素，所以最终 num 内存地址中的值为 3
+
+## 2 内存对齐
+
+计算机内存越来越大，且访问速度越来越快，编程人员一般不不会为了节省一两个字节的内存空间而注重变量类型，也不会注重因为内存不对齐而带来的额外开销。但是知道在 Golang 中也有内存对齐的概念，当遇到内存瓶颈是，也许能提供一个优化思路。示例代码如下：
+
+```
+package main
+
+import (
+	"fmt"
+	"unsafe"
+)
+
+func main() {
+	// 关于内存对齐
+	type A struct {
+		a1 bool //
+		a2 int32
+		a3 bool
+	}
+
+	type B struct {
+		b1 bool
+		b2 bool
+		b3 int32
+	}
+
+	var a A
+	var b B
+	fmt.Println(unsafe.Sizeof(a))
+	fmt.Println(unsafe.Sizeof(b))
+}
+```
+
+* 现象
+  * 测试环境的对齐系数为 4 字节
+  * fmt.Println(unsafe.Sizeof(a)) 等于 12，fmt.Println(unsafe.Sizeof(b)) 等于 8
+
+* 分析
+  * 不同平台的编译器都有自己的默认对齐系数，一般而言，32 位操作系统: 4 字节，64 位操作系统: 8 字节
+  * 若访问未对齐的内存，将会导致 cpu 进行两次内存访问，并花费额外的时钟周期来处理对齐和运算，本身就对齐的内存仅需要一次访问
+  * 良好的编程风格，注意结构体成员对齐问题，可节省对内存的使用
