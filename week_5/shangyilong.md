@@ -26,3 +26,42 @@ L3是多核CPU共享的缓存
 4. 一块多个核心共用的 12MB 的 L3 Cache，采用的是 12 路组相连的放置策略。
 
 https://colin-scott.github.io/personal_website/research/interactive_latency.html
+
+### 缓存
+
+
+#### 高速缓存
+![](./cache-memory.png)
+
+当CPU请求一个地址的时候会发生如下过程：
+1. 地址分为组标记 + 索引 + 偏移量
+2. 通过地址索引找到高速缓存的哪一行
+3. 判断高速缓存的有效位是否为1
+4. 判断地址的组标记和高速缓存的组标记是否一直
+5. 从偏移量开始读取一个字
+
+#### 缓存一致性协议：MESI
+
+![](./img/cache-in.jpeg)
+
+CPU1向L2 cache写入了数据，但是CPU2不知道。这就是缓存不一致。
+
+
+要实现缓存的一致性，需要遵循下面的两个原则：
+1. 写传播：在CPU1上的写要同步到其他地方
+2. 事务的串行化：CPU1修改data1为A，CPU2修改data1为B，那么CPUn和cpun+n读到的应该是一样的
+
+总线嗅探：所有的读写请求通过总线广播给其他的CPU。
+
+![](./mesi.jpeg)
+- M（modified）：已修改
+- E（Exclusive）：独占
+- S（Shared）：共享
+- I（Invaidated）：已失效
+
+[wiki](https://zh.wikipedia.org/wiki/MESI%E5%8D%8F%E8%AE%AE)
+
+
+
+
+
