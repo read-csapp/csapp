@@ -40,7 +40,7 @@ linux早期的信号是从unix继承过来的，32号一下的是不能排队的
 58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
 63) SIGRTMAX-1	64) SIGRTMAX
 ```
-[signal.c](./signal.c)
+[signal.c](./code/signal.c)
 
 编译`gcc signal.c`
 开两个终端：
@@ -66,7 +66,7 @@ read is interrupted by signal
 
 当我们把程序改为59号，也就是SIGRTMAX-5信号，看看
 
-[signal-59.c](./signal-59.c)
+[signal-59.c](./code/signal-59.c)
 
 第一个终端执行：
 ```shell
@@ -85,4 +85,68 @@ SIGRTMAX-5 received
 SIGRTMAX-5 received
 read is interrupted by signal
 ```
+
+### 虚拟内存
+
+内存表示：
+![virtual_memory](./img/virtual_memory.png)
+
+栈在上面，地址向下“增长”；堆在下面，地址向上增长。
+
+```shell
+ pmap 21939
+21939:   ./loop
+000055c1e4bfd000      4K r-x-- loop
+000055c1e4dfd000      4K r---- loop
+000055c1e4dfe000      4K rw--- loop
+000055c1e6781000    132K rw---   [ anon ]
+00007ff1130d6000   1948K r-x-- libc-2.27.so
+00007ff1132bd000   2048K ----- libc-2.27.so
+00007ff1134bd000     16K r---- libc-2.27.so
+00007ff1134c1000      8K rw--- libc-2.27.so
+00007ff1134c3000     16K rw---   [ anon ]
+00007ff1134c7000    156K r-x-- ld-2.27.so
+00007ff1136e4000      8K rw---   [ anon ]
+00007ff1136ee000      4K r---- ld-2.27.so
+00007ff1136ef000      4K rw--- ld-2.27.so
+00007ff1136f0000      4K rw---   [ anon ]
+00007ffc46dc3000    132K rw---   [ stack ]
+00007ffc46de8000     12K r----   [ anon ]
+00007ffc46deb000      8K r-x--   [ anon ]
+ffffffffff600000      4K r-x--   [ anon ]
+ total             4512K
+```
+
+```shell
+# cat /proc/21939/m
+map_files/  maps        mem         mountinfo   mounts      mountstats
+root@iZ8vbaym9jmge8qd5hlcpiZ:~# cat /proc/21939/maps
+55c1e4bfd000-55c1e4bfe000 r-xp 00000000 fc:01 1334149                    /root/linux-c/loop
+55c1e4dfd000-55c1e4dfe000 r--p 00000000 fc:01 1334149                    /root/linux-c/loop
+55c1e4dfe000-55c1e4dff000 rw-p 00001000 fc:01 1334149                    /root/linux-c/loop
+55c1e6781000-55c1e67a2000 rw-p 00000000 00:00 0                          [heap]
+7ff1130d6000-7ff1132bd000 r-xp 00000000 fc:01 1188167                    /lib/x86_64-linux-gnu/libc-2.27.so
+7ff1132bd000-7ff1134bd000 ---p 001e7000 fc:01 1188167                    /lib/x86_64-linux-gnu/libc-2.27.so
+7ff1134bd000-7ff1134c1000 r--p 001e7000 fc:01 1188167                    /lib/x86_64-linux-gnu/libc-2.27.so
+7ff1134c1000-7ff1134c3000 rw-p 001eb000 fc:01 1188167                    /lib/x86_64-linux-gnu/libc-2.27.so
+7ff1134c3000-7ff1134c7000 rw-p 00000000 00:00 0
+7ff1134c7000-7ff1134ee000 r-xp 00000000 fc:01 1188163                    /lib/x86_64-linux-gnu/ld-2.27.so
+7ff1136e4000-7ff1136e6000 rw-p 00000000 00:00 0
+7ff1136ee000-7ff1136ef000 r--p 00027000 fc:01 1188163                    /lib/x86_64-linux-gnu/ld-2.27.so
+7ff1136ef000-7ff1136f0000 rw-p 00028000 fc:01 1188163                    /lib/x86_64-linux-gnu/ld-2.27.so
+7ff1136f0000-7ff1136f1000 rw-p 00000000 00:00 0
+7ffc46dc3000-7ffc46de4000 rw-p 00000000 00:00 0                          [stack]
+7ffc46de8000-7ffc46deb000 r--p 00000000 00:00 0                          [vvar]
+7ffc46deb000-7ffc46ded000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+```
+
+32位的内存分页如下：
+
+![](./img/32-mem-page.jpeg)
+
+32位用两个页就够了
+
+
+
 
